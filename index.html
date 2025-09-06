@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OTP with Firebase</title>
+
+</head>
+<body>
+    <h1>Send OTP using Firebase</h1>
+    <input type="tel" id="phone" placeholder="+91xxxxxxxxxx" />
+    <button onclick="sendOTP()">Send OTP</button>
+    <br /><br />
+    <input type="text" id="otp" placeholder="Enter OTP" />
+    <button onclick="verifyOTP()">Verify OTP</button>
+    <div id="result"></div>
+
+    <script type="module">
+        import { auth } from "./firebase-config.js";
+        import { RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+        function setUpRecaptcha() {
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'invisible',
+                'callback': (response) => {
+                    console.log("Recaptcha Verified");
+                }
+            });
+        }
+
+        async function sendOTP(phoneNumber) {
+            setUpRecaptcha();
+            const appVerifier = window.recaptchaVerifier;
+
+            try {
+                const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+                window.confirmationResult = confirmationResult;
+                alert("OTP Sent!");
+            } catch (error) {
+                console.error("SMS not sent", error);
+            }
+        }
+
+        async function verifyOTP(code) {
+            try {
+                const result = await window.confirmationResult.confirm(code);
+                console.log("User signed in:", result.user);
+                alert("OTP Verified Successfully!");
+            } catch (error) {
+                console.error("OTP Verification Failed", error);
+            }
+        }
+
+        window.sendOTP = () => {
+            const phone = document.getElementById("phone").value;
+            sendOTP(phone);
+        };
+
+        window.verifyOTP = () => {
+            const code = document.getElementById("otp").value;
+            verifyOTP(code);
+        };
+    </script>
+    <div id="recaptcha-container"></div>
+</body>
+</html>
